@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: Social network API for system design course
+  version: 1.0.0
+servers:
+  - url: https://api.social-network.com/v1
+tags:
+  - name: Posts
+    description: post operations
+  - name: Comments
+    description: comment operations
+  - name: Ratings
+    description: rating operations
+  - name: Subscriptions
+    description: subscription operations
+  - name: Search
+    description: search operations
+paths:
+  /posts:
+    post:
+      tags:
+        - Posts
+      summary: New post creating
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+      responses:
+        '201':
+          description: successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Posts
+      summary: get posts list
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: posts count
+      responses:
+        '200':
+          description: Posts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /posts/{postId}:
+    get:
+      tags:
+        - Posts
+      summary: post getting
+      parameters:
+        - $ref: '#/components/parameters/postId'
+      responses:
+        '200':
+          description: post data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Posts
+      summary: post deletion
+      parameters:
+        - $ref: '#/components/parameters/postId'
+      responses:
+        '204':
+          description: successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: do not have permission for this operaation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /posts/{postId}/comments:
+    post:
+      tags:
+        - Comments
+      summary: adding comment to post
+      parameters:
+        - $ref: '#/components/parameters/postId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Comments
+      summary: get comments
+      parameters:
+        - $ref: '#/components/parameters/postId'
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: comments count
+      responses:
+        '200':
+          description: comments list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /posts/{postId}/ratings:
+    post:
+      tags:
+        - Ratings
+      summary: posts rating
+      parameters:
+        - $ref: '#/components/parameters/postId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingCreate'
+      responses:
+        '201':
+          description: successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Rating'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{userId}/subscribe:
+    post:
+      tags:
+        - Subscriptions
+      summary: subscribe
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '200':
+          description: succesfully
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      tags:
+        - Subscriptions
+      summary: unsunscribe
+      parameters:
+        - $ref: '#/components/parameters/userId'
+      responses:
+        '204':
+          description: successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /subscriptions/feed:
+    get:
+      tags:
+        - Subscriptions
+      summary: get subscriptions list
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: count
+      responses:
+        '200':
+          description: subscriptions list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/Post'
+                    - $ref: '#/components/schemas/Comment'
+                    - $ref: '#/components/schemas/Rating'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /search/places:
+    get:
+      tags:
+        - Search
+      summary: places search
+      parameters:
+        - in: query
+          name: query
+          required: true
+          schema:
+            type: string
+          description: query
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: result
+      responses:
+        '200':
+          description: places list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Place'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /search/posts:
+    get:
+      tags:
+        - Search
+      summary: posts search
+      parameters:
+        - in: query
+          name: placeId
+          required: true
+          schema:
+            type: string
+          description: place ID
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: page number
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+          description: posts count
+      responses:
+        '200':
+          description: posts list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    PostCreate:
+      type: object
+      required:
+        - description
+        - geo_location
+      properties:
+        description:
+          type: string
+          example: "Awesome place"
+        geo_location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: float
+              example: 48.8566
+            longitude:
+              type: number
+              format: float
+              example: 2.3522
+        photos:
+          type: array
+          items:
+            type: string
+            format: binary
+          maxItems: 5
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "post123"
+        user_id:
+          type: string
+          example: "user123"
+        description:
+          type: string
+          example: "Awesome place"
+        geo_location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: float
+              example: 48.8566
+            longitude:
+              type: number
+              format: float
+              example: 2.3522
+        photos:
+          type: array
+          items:
+            type: string
+            format: url
+            example: "https://images.social-network.com/photo1.jpg"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+
+    CommentCreate:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 500
+          example: "Awesome place"
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "comment123"
+        post_id:
+          type: string
+          example: "post123"
+        user_id:
+          type: string
+          example: "user456"
+        content:
+          type: string
+          example: "Awesome place"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T13:00:00Z"
+
+    RatingCreate:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+
+    Rating:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "rating123"
+        post_id:
+          type: string
+          example: "post123"
+        user_id:
+          type: string
+          example: "user456"
+        value:
+          type: integer
+          example: 5
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-01T14:00:00Z"
+
+    Place:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "place123"
+        name:
+          type: string
+          example: "Awesome place"
+        description:
+          type: string
+          example: "Awesome place"
+        popularity:
+          type: integer
+          example: 1000000
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "error"
+
+  parameters:
+    postId:
+      in: path
+      name: postId
+      required: true
+      schema:
+        type: string
+      description: post ID
+
+    userId:
+      in: path
+      name: userId
+      required: true
+      schema:
+        type: string
+      description: user ID
+
+  responses:
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal errro
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
